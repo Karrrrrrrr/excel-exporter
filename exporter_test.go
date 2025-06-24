@@ -22,8 +22,12 @@ func TestExportWithStreamWriter(t *testing.T) {
 		Name:    "SheetB",
 		RowFunc: generateLargeData("SheetB", 2000), // 2k rows
 	}
+	sheetData3 := SheetData{
+		Name:    "SheetC",
+		RowFunc: generateLargeData("SheetC", 1<<20+1), // 20k rows
+	}
 
-	sheets := []SheetData{sheetData1, sheetData2}
+	sheets := []SheetData{sheetData1, sheetData2, sheetData3}
 
 	// Start CPU profiling
 	cpuProfile, err := os.Create("cpu_profile_streamwriter.prof")
