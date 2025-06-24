@@ -24,7 +24,7 @@ func TestExportWithStreamWriter(t *testing.T) {
 	}
 	sheetData3 := SheetData{
 		Name:    "SheetC",
-		RowFunc: generateLargeData("SheetC", 1<<20+1), // 20k rows
+		RowFunc: generateLargeData("SheetC", 1<<20+1),
 	}
 
 	sheets := []SheetData{sheetData1, sheetData2, sheetData3}
