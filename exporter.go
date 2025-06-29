@@ -150,9 +150,9 @@ func (e *Exporter) exportHelper(sheet SheetData, initFunc func(string) error, wr
 	if err := initFunc(e.CurrentSheet); err != nil {
 		return err
 	}
-
+	var rowIndex = 0
 	for {
-		row, err := sheet.RowFunc(rowID)
+		row, err := sheet.RowFunc(rowIndex)
 		if err != nil {
 			return err
 		}
@@ -182,6 +182,7 @@ func (e *Exporter) exportHelper(sheet SheetData, initFunc func(string) error, wr
 		}
 
 		rowID++
+		rowIndex++
 	}
 
 	return nil
