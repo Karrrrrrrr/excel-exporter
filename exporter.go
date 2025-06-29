@@ -40,6 +40,9 @@ func New(fileName string, useStreamWriter bool) *Exporter {
 
 // Export exports the Excel file.
 func (e *Exporter) Export(sheets []SheetData) error {
+	// call close to remove temp files
+	defer e.File.Close()
+
 	for i, sheet := range sheets {
 		if _, err := e.File.NewSheet(sheet.Name); err != nil {
 			return fmt.Errorf("failed to create a new sheet: %w", err)
@@ -63,12 +66,7 @@ func (e *Exporter) Export(sheets []SheetData) error {
 		}
 	}
 
-	err := e.File.SaveAs(e.FileName)
-	if err != nil {
-		return err
-	}
-	// call close to remove temp files
-	return e.File.Close()
+	return e.File.SaveAs(e.FileName)
 }
 
 func (e *Exporter) exportUsingStreamWriter(sheet SheetData) error {
