@@ -63,12 +63,9 @@ func (e *Exporter) Export(sheets []SheetData) error {
 		}
 	}
 
-	err := e.File.SaveAs(e.FileName)
-	if err != nil {
-		return err
-	}
 	// call close to remove temp files
-	return e.File.Close()
+	defer e.File.Close()
+	return e.File.SaveAs(e.FileName)
 }
 
 func (e *Exporter) exportUsingStreamWriter(sheet SheetData) error {
