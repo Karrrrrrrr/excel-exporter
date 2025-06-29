@@ -75,6 +75,7 @@ func (e *Exporter) Export(sheets []SheetData) error {
 func (e *Exporter) exportUsingStreamWriter(sheet SheetData) error {
 	initFunc := func(sheetName string) error {
 		var err error
+		// cell merge and style will be lost if no flush
 		if e.StreamWriter != nil {
 			err = e.StreamWriter.Flush()
 			if err != nil {
