@@ -70,8 +70,6 @@ func (e *Exporter) Export(sheets []SheetData) error {
 		}
 	}
 
-	// call close to remove temp files
-	defer e.File.Close()
 	return e.File.SaveAs(e.FileName)
 }
 
