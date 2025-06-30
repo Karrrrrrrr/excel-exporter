@@ -22,8 +22,12 @@ func TestExportWithStreamWriter(t *testing.T) {
 		Name:    "SheetB",
 		RowFunc: generateLargeData("SheetB", 2000), // 2k rows
 	}
+	sheetData3 := SheetData{
+		Name:    "SheetC",
+		RowFunc: generateLargeData("SheetC", SheetMaxRows+1),
+	}
 
-	sheets := []SheetData{sheetData1, sheetData2}
+	sheets := []SheetData{sheetData1, sheetData2, sheetData3}
 
 	// Start CPU profiling
 	cpuProfile, err := os.Create("cpu_profile_streamwriter.prof")
@@ -116,6 +120,18 @@ func TestExportWithStreamWriterUseChannel(t *testing.T) {
 		sheets[i] = SheetData{
 			Name:    name,
 			RowFunc: UseRowChan(queryDataToChannelFunc(exporter, name)),
+			InitFunc: func(exporter *Exporter) (err error) {
+				if exporter.UseStreamWriter {
+					if err = exporter.StreamWriter.SetColWidth(1, 3, 30); err != nil {
+						return err
+					}
+				} else {
+					if err = exporter.File.SetColWidth(exporter.CurrentSheet, "A", "C", 30); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
 		}
 	}
 
@@ -139,45 +155,41 @@ func queryDataToChannelFunc(exporter *Exporter, sheetName string) func(dataCh ch
 			return err
 		}
 
-		// Set column width
-		if exporter.UseStreamWriter {
-			if err = exporter.StreamWriter.SetColWidth(1, 3, 30); err != nil {
-				return err
-			}
-		} else {
-			if err = exporter.File.SetColWidth(exporter.CurrentSheet, "A", "C", 30); err != nil {
-				return err
-			}
-		}
-
-		dataCh <- Row{
-			Cells: []excelize.Cell{
-				{Value: "MergedTitle 1", StyleID: titleStyle},
-				{Value: "", StyleID: titleStyle},
-				{Value: "MergedTitle 2", StyleID: titleStyle},
-			},
-			MergeCells: []MergeCell{
-				{TopLeftCell: "A1", BottomRightCell: "B1"},
-			},
-			RowOpts: []excelize.RowOpts{
-				{Height: 20, StyleID: titleStyle},
-			},
-		}
-
-		dataCh <- Row{
-			Cells: []excelize.Cell{
-				{Value: "Title 1", StyleID: titleStyle},
-				{Value: "Title 2", StyleID: titleStyle},
-				{Value: "Title 3", StyleID: titleStyle},
-			},
-		}
-
 		// Simulate querying data from the database and sending to channel
-		for i := 0; i < 10000; i++ {
+		rowIndex := 0
+		for i := 0; i < (SheetMaxRows*2)+3; i++ {
+			if i%(SheetMaxRows) == 0 {
+				dataCh <- Row{
+					Cells: []excelize.Cell{
+						{Value: "MergedTitle 1", StyleID: titleStyle},
+						{Value: "", StyleID: titleStyle},
+						{Value: "MergedTitle 2", StyleID: titleStyle},
+					},
+					MergeCells: []MergeCell{
+						{TopLeftCell: "A1", BottomRightCell: "B1"},
+					},
+					RowOpts: []excelize.RowOpts{
+						{Height: 20, StyleID: titleStyle},
+					},
+				}
+				continue
+			}
+			if i%(SheetMaxRows) == 1 {
+				dataCh <- Row{
+					Cells: []excelize.Cell{
+						{Value: "Sub Title 1", StyleID: titleStyle},
+						{Value: "Sub Title 2", StyleID: titleStyle},
+						{Value: "Sub Title 3", StyleID: titleStyle},
+					},
+				}
+				continue
+			}
+			rowIndex++
+
 			dataCh <- NewRow(
-				fmt.Sprintf("%s-%d-1", sheetName, i),
-				fmt.Sprintf("%s-%d-2", sheetName, i),
-				fmt.Sprintf("%s-%d-3", sheetName, i),
+				fmt.Sprintf("%s-%d-1", sheetName, rowIndex),
+				fmt.Sprintf("%s-%d-2", sheetName, rowIndex),
+				fmt.Sprintf("%s-%d-3", sheetName, rowIndex),
 			)
 		}
 
